@@ -450,6 +450,10 @@ class ClipboardIndicator extends PanelMenu.Button {
       this._favoriteToggle(menuItem);
     }
     if (event.get_key_code() === 119) {
+      const next = menuItem.entry.prev || menuItem.entry.next;
+      if (next?.menuItem) {
+        global.stage.set_key_focus(next.menuItem);
+      }
       this._deleteEntryAndRestoreLatest(menuItem.entry);
     }
   }
@@ -773,6 +777,7 @@ class ClipboardIndicator extends PanelMenu.Button {
       forward = true;
     }
 
+    query = query.toLowerCase();
     let searchExp;
     try {
       searchExp = new RegExp(query, 'i');
@@ -782,7 +787,7 @@ class ClipboardIndicator extends PanelMenu.Button {
 
     while (this.activeHistoryMenuItems < PAGE_SIZE) {
       if (entry.type === DS.TYPE_TEXT) {
-        let match = entry.text.indexOf(query);
+        let match = entry.text.toLowerCase().indexOf(query);
         if (searchExp && match < 0) {
           match = entry.text.search(searchExp);
         }
@@ -1004,6 +1009,14 @@ class ClipboardIndicator extends PanelMenu.Button {
   }
 
   _showNotification(title, message, transformFn) {
+    const dndOn = () =>
+      !Main.panel.statusArea.dateMenu._indicator._settings.get_boolean(
+        'show-banners',
+      );
+    if (PRIVATE_MODE || dndOn()) {
+      return;
+    }
+
     this._initNotifSource();
 
     let notification;
